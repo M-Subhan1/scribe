@@ -8,6 +8,7 @@ import gfm from "remark-gfm";
 import cliProgress from "cli-progress";
 import colors from "ansi-colors";
 import sharp from "sharp";
+import promiseRetry from "promise-retry";
 import { unified } from "unified";
 
 import { questions } from "./lib/questions";
@@ -24,7 +25,6 @@ const mdProcessor = unified()
 async function fetchImage(
   url: string,
 ): Promise<{ image: ArrayBuffer; width: number; height: number }> {
-  console.log(url);
   const res = await fetch(url);
   const buf = await res.arrayBuffer();
   const image = sharp(buf);
@@ -66,18 +66,33 @@ export async function generateHandler(
       }
 
       const base64Image = buffer.toString("base64");
-      const completion = await imageToTextCompletion(
-        `data:image/jpeg;base64,${base64Image}`,
-      );
 
-      return completion.choices[0].message.content ?? "";
+      const content = await promiseRetry(async (retry, attempt) => {
+        const completion = await imageToTextCompletion(
+          `data:image/jpeg;base64,${base64Image}`,
+        ).catch((error) => attempt < 3 && retry(error));
+
+        if (!completion) {
+          throw new Error("Failed to get completion");
+        }
+
+        const content = completion.choices[0].message.content;
+
+        if (!content) {
+          throw new Error("Failed to get content");
+        }
+
+        return content;
+      });
+
+      return content;
     };
   });
 
   // process the tasks in batches
   const startPage = range ? Math.max(parseInt(range.split("-")[0]), 1) : 1;
   const endPage = range ? parseInt(range.split("-")[1]) : Infinity;
-  const batchSize = 10;
+  const batchSize = 40;
   const results: string[] = [];
   for (
     let i = Math.max(startPage - 1, 0);

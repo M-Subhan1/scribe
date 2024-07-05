@@ -36,13 +36,13 @@ const generatePromptMessages = (imageUrl: string) => {
       content: `You are an accurate ocr model. You will be provided an image of a textbook page. 
         Your job is to follow the follow instructions extremely carefully:
           - extract text from the image as accurately as possible, do not paraphrase the text or add any additional information
-          - ensure all headings, subheadings, and paragraphs are correctly identified
-          - add a new line after each paragraph, heading, or subheading
-          - for equations, return the latex representation. Wrap latex in $$ 
+          - ensure all headings, subheadings, and paragraphs are correctly identified and formatted using markdown.
+          - leave a couple of blank lines above each heading, subheading, or paragraph.
+          - for equations, return the latex representation wrapped within $$ (ensure both opening and closing tags are present). 
+          - skip over all the dots your see within an equation. (DO NOT INCLUDE ldots within latex tags)
           - for tables, return the table in markdown format that can be parsed using markdown-it
           - for charts, diagrams, or other non-text elements, leave a placeholder in the following format: [FIGURE: <chart-number>], leave spaces above and below the placeholder
-          - do not return any images or diagrams, only text
-          - ensure the text is legible and formatted correctly using markdown with proper spacing and indentation
+          - IMPORTANT: ENSURE THE TEXT IS FORMATTED CORRECTLY USING MARKDOWN. DO NOT USE ANY OTHER FORMATTING. DO NO RETURN ANY IMAGES OR DIAGRAMS. ONLY RETURN TEXT.
       `,
     },
     {
